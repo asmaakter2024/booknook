@@ -39,12 +39,12 @@ export default function HowBorrowingWorks() {
             Find something you love, request it from the library, and enjoy
             reading at your own pace.
           </p>
-
+{/* 
           <Button asChild className="mt-6 bg-[#315b43] hover:bg-[#254834]">
             <Link href="/books">
               Browse books <ArrowRight className="ml-2 size-4" />
             </Link>
-          </Button>
+          </Button> */}
         </div>
 
         <div className="space-y-4">
