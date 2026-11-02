@@ -1,7 +1,8 @@
 import Link from "next/link";
 import { ArrowRight, BookOpen, CheckCircle2, Clock3 } from "lucide-react";
 
-import { Button } from "@/components/ui/button";
+import { buttonVariants } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 
 const steps = [
   {
@@ -39,12 +40,17 @@ export default function HowBorrowingWorks() {
             Find something you love, request it from the library, and enjoy
             reading at your own pace.
           </p>
-{/* 
-          <Button asChild className="mt-6 bg-[#315b43] hover:bg-[#254834]">
-            <Link href="/books">
-              Browse books <ArrowRight className="ml-2 size-4" />
-            </Link>
-          </Button> */}
+
+          {/* [FIX]: বাটনটি অ্যাক্টিভ করা হয়েছে এবং buttonVariants সহ লিঙ্ক করা হয়েছে */}
+          <Link
+            href="/books"
+            className={cn(
+              buttonVariants(),
+              "mt-6 inline-flex bg-[#315b43] text-white hover:bg-[#254834]"
+            )}
+          >
+            Browse books <ArrowRight className="ml-2 size-4" />
+          </Link>
         </div>
 
         <div className="space-y-4">

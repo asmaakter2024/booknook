@@ -8,7 +8,8 @@ import { Swiper, SwiperSlide } from "swiper/react";
 import "swiper/css";
 import "swiper/css/pagination";
 
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 import Image from "next/image";
 
 const slides = [
@@ -109,11 +110,16 @@ export default function Banner() {
                   {slide.description}
                 </p>
 
-                <Button className="mt-7 bg-amber-100 text-stone-900 hover:bg-white">
-                  <Link href="/books">
-                    Browse Books <span aria-hidden="true">→</span>
-                  </Link>
-                </Button>
+                {/* [FIX]: <button> এর ভেতর <a> নেস্টিং বাদ দিয়ে buttonVariants সহ সরাসরি <Link> ব্যবহার করা হয়েছে */}
+                <Link
+                  href="/books"
+                  className={cn(
+                    buttonVariants(),
+                    "mt-7 bg-amber-100 text-stone-900 hover:bg-white"
+                  )}
+                >
+                  Browse Books <span aria-hidden="true">→</span>
+                </Link>
               </div>
 
               <SlideControls />

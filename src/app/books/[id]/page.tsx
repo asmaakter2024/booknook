@@ -1,34 +1,32 @@
-// const BooksDetailsPage = async ({ params }) => {
-//   const { id } = await params;
-
-//   const res = await fetch(`http://localhost:8000/books/${id}`);
-//   const data = await res.json();
-//   console.log(data);
-//   //console.log(id);
-
-//   return (
-//   <div>
-//     BooksDetailsPage
-//   </div>
-//   );
-// };
-
-// export default BooksDetailsPage;
-
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, type FormEvent } from "react";
 import { useParams, useRouter } from "next/navigation";
 import "./books-details.css";
 import Image from "next/image";
+import PrivateRoute from "@/components/PrivateRoute";
+import { useAuth } from "@/context/AuthContext";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
-const BooksDetailsPage = () => {
+interface IBookDetails {
+  _id?: string;
+  title?: string;
+  author?: string;
+  image?: string;
+  category?: string;
+  totalCopies?: number;
+  description?: string;
+  userName?: string;
+  userEmail?: string;
+}
+
+function BooksDetailsContent() {
   const { id } = useParams();
   const router = useRouter();
+  const { user } = useAuth();
 
-  const [book, setBook] = useState(null);
+  const [book, setBook] = useState<IBookDetails | null>(null);
   const [loading, setLoading] = useState(true);
   const [pageError, setPageError] = useState("");
 
@@ -37,6 +35,8 @@ const BooksDetailsPage = () => {
   const [userEmail, setUserEmail] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [message, setMessage] = useState("");
+
+  // [FIX]: ডায়ালগ ওপেন করার সময় ইউজারের নাম ও ইমেইল সেট করা হবে (useEffect এর পরিবর্তে)
 
   useEffect(() => {
     if (!id) return;
@@ -60,11 +60,15 @@ const BooksDetailsPage = () => {
           );
         }
 
-        const data = await res.json();
+        const data: IBookDetails = await res.json();
         setBook(data);
-      } catch (err) {
-        if (err.name !== "AbortError") {
-          setPageError(err.message || "Could not connect to the books server.");
+      } catch (err: unknown) {
+        if (err instanceof Error) {
+          if (err.name !== "AbortError") {
+            setPageError(err.message || "Could not connect to the books server.");
+          }
+        } else {
+          setPageError("Could not connect to the books server.");
         }
       } finally {
         if (!controller.signal.aborted) {
@@ -78,21 +82,24 @@ const BooksDetailsPage = () => {
     return () => controller.abort();
   }, [id]);
 
-  async function handleBorrow(event) {
+  async function handleBorrow(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setSubmitting(true);
     setMessage("");
 
     try {
+      const currentUserName = (user?.name || userName || "").trim();
+      const currentUserEmail = (user?.email || userEmail || "").trim();
+
       const res = await fetch(`${API_URL}/borrows`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          bookId: book._id || id,
-          userName: userName.trim(),
-          userEmail: userEmail.trim(),
+          bookId: book?._id || id,
+          userName: currentUserName,
+          userEmail: currentUserEmail,
         }),
       });
 
@@ -105,9 +112,23 @@ const BooksDetailsPage = () => {
       }
 
       setMessage("Book borrowed successfully!");
-      window.setTimeout(() => setDialogOpen(false), 900);
-    } catch (err) {
-      setMessage(err.message || "Something went wrong. Please try again.");
+
+      setBook((prev) =>
+        prev
+          ? {
+              ...prev,
+              totalCopies: Math.max(0, Number(prev.totalCopies || 1) - 1),
+            }
+          : prev
+      );
+
+      window.setTimeout(() => setDialogOpen(false), 1200);
+    } catch (err: unknown) {
+      const errorMsg =
+        err instanceof Error
+          ? err.message
+          : "Something went wrong. Please try again.";
+      setMessage(errorMsg);
     } finally {
       setSubmitting(false);
     }
@@ -150,6 +171,7 @@ const BooksDetailsPage = () => {
               alt={`Cover of ${title}`}
               width={300}
               height={450}
+              unoptimized
             />
           ) : (
             <div className="book-cover-placeholder">{title}</div>
@@ -168,10 +190,13 @@ const BooksDetailsPage = () => {
           <div className="book-meta">
             <div>
               <span className="meta-label">Added by</span>
+              {/* [FIX]: লগইন করা ইউজারের নাম ও ইমেইল দিয়ে Added by অংশ দেখানো হচ্ছে */}
               <strong>
-                {(book.userName || "Library").trim() || "Library"}
+                {(user?.name || book.userName || "Library").trim()}
               </strong>
-              <span className="meta-sub">{(book.userEmail || "").trim()}</span>
+              <span className="meta-sub">
+                {(user?.email || book.userEmail || "").trim()}
+              </span>
             </div>
 
             <div>
@@ -186,10 +211,14 @@ const BooksDetailsPage = () => {
               disabled={available < 1}
               onClick={() => {
                 setMessage("");
+                if (user) {
+                  setUserName(user.name);
+                  setUserEmail(user.email);
+                }
                 setDialogOpen(true);
               }}
             >
-              {available < 1 ? "No Copies Available" : "Borrow This Book"}
+              {available < 1 ? "Not Available" : "Borrow This Book"}
             </button>
 
             <button className="book-back" onClick={() => router.push("/books")}>
@@ -227,24 +256,23 @@ const BooksDetailsPage = () => {
             <p className="dialog-note">You can keep this book for 7 days.</p>
 
             <form onSubmit={handleBorrow}>
+              {/* [FIX]: পপ-আপে লগইন করা ইউজারের নাম readOnly হিসেবে বসানো হলো (এডিট করা যাবে না) */}
               <label htmlFor="borrow-name">User Name</label>
               <input
                 id="borrow-name"
-                autoFocus
-                required
-                value={userName}
-                onChange={(event) => setUserName(event.target.value)}
-                placeholder="Enter your name"
+                readOnly
+                value={user?.name || userName}
+                className="cursor-not-allowed opacity-80"
               />
 
+              {/* [FIX]: পপ-আপে লগইন করা ইউজারের ইমেইল readOnly হিসেবে বসানো হলো (এডিট করা যাবে না) */}
               <label htmlFor="borrow-email">User Email</label>
               <input
                 id="borrow-email"
                 type="email"
-                required
-                value={userEmail}
-                onChange={(event) => setUserEmail(event.target.value)}
-                placeholder="you@example.com"
+                readOnly
+                value={user?.email || userEmail}
+                className="cursor-not-allowed opacity-80"
               />
 
               {message && (
@@ -273,6 +301,14 @@ const BooksDetailsPage = () => {
       )}
     </main>
   );
-};
+}
 
-export default BooksDetailsPage;
+// [PRIVATE ROUTE]: বইয়ের ডিটেইলস পেজটি PrivateRoute দিয়ে সুরক্ষিত করা হলো
+// ইউজার লগইন না থাকলে স্বয়ংক্রিয়ভাবে লগইন পেজে চলে যাবে
+export default function BooksDetailsPage() {
+  return (
+    <PrivateRoute>
+      <BooksDetailsContent />
+    </PrivateRoute>
+  );
+}

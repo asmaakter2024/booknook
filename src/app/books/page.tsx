@@ -1,6 +1,7 @@
 import { Suspense } from "react";
 import Image from "next/image";
 import Link from "next/link";
+import { BookOpen } from "lucide-react";
 
 type IBook = {
   _id?: string;
@@ -11,20 +12,29 @@ type IBook = {
   image?: string;
 };
 
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+
 async function AllBooks() {
-  // const res = await fetch("http://localhost:8000/books", {
-  //   cache: "no-store",
-  // });
-  const res = await fetch("http://127.0.0.1:8000/books", {
-    cache: "no-store",
-  });
+  let books: IBook[] = [];
+  let fetchError = "";
 
-  if (!res.ok) {
-    throw new Error("Failed to load books");
+  // [FIX 1]: fetch-কে try...catch-এর ভেতরে নেওয়া হয়েছে
+  // যাতে ব্যাকএন্ড সার্ভার অফ থাকলে পুরো Next.js পেজ ক্র্যাশ না করে মার্জিত মেসেজ দেখায়
+  try {
+    const res = await fetch(`${API_URL}/books`, {
+      cache: "no-store",
+    });
+
+    if (!res.ok) {
+      throw new Error(`Server returned status: ${res.status}`);
+    }
+
+    const data = await res.json();
+    books = Array.isArray(data) ? data : (data.books ?? []);
+  } catch (err) {
+    console.error("Could not fetch books:", err);
+    fetchError = "Could not load books from the server. Please check if booknook-server is running.";
   }
-
-  const data = await res.json();
-  const books: IBook[] = Array.isArray(data) ? data : (data.books ?? []);
 
   return (
     <section className="w-full bg-background px-6 py-12">
@@ -36,26 +46,50 @@ async function AllBooks() {
           </p>
         </div>
 
+        {/* [FIX 2]: সার্ভার অফ থাকলে সুন্দর এরর ব্যানার দেখানো */}
+        {fetchError && (
+          <div className="mx-auto mt-8 max-w-md rounded-lg border border-red-500/20 bg-red-500/10 p-4 text-center text-sm text-red-400">
+            {fetchError}
+          </div>
+        )}
+
+        {/* বই না থাকলে মেসেজ */}
+        {!fetchError && books.length === 0 && (
+          <div className="mt-12 text-center text-muted-foreground">
+            No books found on the shelf yet.{" "}
+            <Link href="/add-book" className="text-primary underline">
+              Add your first book!
+            </Link>
+          </div>
+        )}
+
         <div className="mt-10 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
           {books.map((book, index) => {
             const bookId = book._id ?? book.id ?? book.title;
-            const imageUrl = book.image?.trim() || "/placeholder-book.png";
+            const imageUrl = book.image?.trim();
 
             return (
               <article
                 className="overflow-hidden rounded-lg border border-border bg-card"
                 key={bookId}
               >
-                <Image
-                  src={imageUrl}
-                  alt={`Cover of ${book.title}`}
-                  width={300}
-                  height={450}
-                  unoptimized
-                  //loading={index === 0 ? "eager" : "lazy"}
-                  loading={index < 2 ? "eager" : "lazy"}
-                  className="h-72 w-full object-cover"
-                />
+                {/* [FIX 3]: ইমেজ না থাকলে 404 placeholder-book.png না ডেকে ফ্লেক্সিবল ফলব্যাক রেন্ডার করা */}
+                {imageUrl ? (
+                  <Image
+                    src={imageUrl}
+                    alt={`Cover of ${book.title}`}
+                    width={300}
+                    height={450}
+                    unoptimized
+                    loading={index < 2 ? "eager" : "lazy"}
+                    className="h-72 w-full object-cover"
+                  />
+                ) : (
+                  <div className="flex h-72 w-full flex-col items-center justify-center bg-muted text-muted-foreground">
+                    <BookOpen className="size-12 opacity-40" />
+                    <span className="mt-2 text-xs font-medium">No cover image</span>
+                  </div>
+                )}
 
                 <div className="flex min-h-44 flex-col items-start p-4">
                   <span className="mb-3 rounded-full border border-border px-3 py-1 text-xs">

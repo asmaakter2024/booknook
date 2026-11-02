@@ -1,6 +1,8 @@
 "use client";
 
 import { useState, type FormEvent } from "react";
+import { useAuth } from "@/context/AuthContext";
+import PrivateRoute from "@/components/PrivateRoute";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -14,16 +16,30 @@ import {
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 const categories = ["Fiction", "Science", "History", "Kids", "Others"];
 
-export default function AddBookPage() {
+function AddBookContent() {
+  const { user } = useAuth();
   const [successMessage, setSuccessMessage] = useState("");
+  const [errorMessage, setErrorMessage] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // লগইন করা ইউজারের নাম ও ইমেইল ইনিশিয়াল স্টেট হিসেবে বসানো
+  const [userName, setUserName] = useState(user?.name || "");
+  const [userEmail, setUserEmail] = useState(user?.email || "");
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    setSuccessMessage("");
+    setErrorMessage("");
+    setIsSubmitting(true);
 
     const form = event.currentTarget;
     const formData = new FormData(form);
+
+    const currentUserName = (user?.name || userName || "").trim();
+    const currentUserEmail = (user?.email || userEmail || "").trim();
 
     const bookData = {
       title: formData.get("title"),
@@ -32,27 +48,37 @@ export default function AddBookPage() {
       totalCopies: Number(formData.get("totalCopies")),
       image: formData.get("image"),
       description: formData.get("description"),
-      userName: formData.get("userName"),
-      userEmail: formData.get("userEmail"),
+      userName: currentUserName,
+      userEmail: currentUserEmail,
     };
 
-    // Frontend-only: এখন data console-এ দেখা যাবে।
-    console.log("Book form data:", bookData);
+    try {
+      const res = await fetch(`${API_URL}/add-book`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(bookData),
+      });
 
-    setSuccessMessage("Book form submitted successfully!");
-    form.reset();
+      if (!res.ok) {
+        throw new Error("Failed to add book to the server. Please try again.");
+      }
 
-    //data fetch
-    const res = await fetch("http://localhost:8000/add-book", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(bookData),
-    });
-
-    const data = await res.json();
-    console.log(data);
+      setSuccessMessage("Book added successfully to the library!");
+      form.reset();
+      if (user) {
+        setUserName(user.name);
+        setUserEmail(user.email);
+      }
+    } catch (err: unknown) {
+      console.error("Error adding book:", err);
+      const msg =
+        err instanceof Error ? err.message : "Could not connect to server.";
+      setErrorMessage(msg);
+    } finally {
+      setIsSubmitting(false);
+    }
   }
 
   return (
@@ -75,6 +101,7 @@ export default function AddBookPage() {
                 id="title"
                 name="title"
                 required
+                placeholder="e.g. The Hobbit"
                 className="h-9 border-white/15 bg-white/[0.045] text-white"
               />
             </div>
@@ -85,6 +112,7 @@ export default function AddBookPage() {
                 id="author"
                 name="author"
                 required
+                placeholder="e.g. J.R.R. Tolkien"
                 className="h-9 border-white/15 bg-white/[0.045] text-white"
               />
             </div>
@@ -125,15 +153,14 @@ export default function AddBookPage() {
           </div>
 
           <div className="grid gap-1.5">
-            <Label htmlFor="imageUrl"> ImageUrl</Label>
+            <Label htmlFor="imageUrl">Image URL</Label>
             <Input
               id="imageUrl"
               name="image"
               type="url"
-              placeholder="https://example.com/image.jpg"
-              accept="image/*"
+              placeholder="https://example.com/cover.jpg"
               required
-              className="h-9 cursor-pointer border-white/15 bg-white/[0.045] text-white file:mr-3 file:border-0 file:bg-transparent file:text-sm file:text-white"
+              className="h-9 border-white/15 bg-white/[0.045] text-white"
             />
           </div>
 
@@ -143,49 +170,69 @@ export default function AddBookPage() {
               id="description"
               name="description"
               required
+              placeholder="Write a brief synopsis of the book..."
               className="min-h-14 border-white/15 bg-white/[0.045] text-white"
             />
           </div>
 
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="grid gap-1.5">
-              <Label htmlFor="userName">User Name</Label>
+              <Label htmlFor="userName">Your Name</Label>
+              {/* [FIX]: লগইন করা ইউজারের নাম readOnly হিসেবে বসানো হলো যাতে পরিবর্তন করা না যায় */}
               <Input
                 id="userName"
                 name="userName"
-                defaultValue=""
                 readOnly
-                className="h-9 border-white/10 bg-white/[0.035] text-white/65"
+                value={user?.name || userName}
+                className="h-9 cursor-not-allowed border-white/10 bg-white/[0.035] text-white/65"
               />
             </div>
 
             <div className="grid gap-1.5">
-              <Label htmlFor="userEmail">User Email</Label>
+              <Label htmlFor="userEmail">Your Email</Label>
+              {/* [FIX]: লগইন করা ইউজারের ইমেইল readOnly হিসেবে বসানো হলো যাতে পরিবর্তন করা না যায় */}
               <Input
                 id="userEmail"
                 name="userEmail"
                 type="email"
-                defaultValue=""
                 readOnly
-                className="h-9 border-white/10 bg-white/[0.035] text-white/65"
+                value={user?.email || userEmail}
+                className="h-9 cursor-not-allowed border-white/10 bg-white/[0.035] text-white/65"
               />
             </div>
           </div>
 
           {successMessage && (
-            <p role="status" className="text-sm text-[#8fd3a7]">
-              {successMessage}
+            <p role="status" className="text-sm font-medium text-[#8fd3a7]">
+              ✓ {successMessage}
+            </p>
+          )}
+
+          {errorMessage && (
+            <p role="alert" className="text-sm font-medium text-red-400">
+              ✕ {errorMessage}
             </p>
           )}
 
           <Button
             type="submit"
+            disabled={isSubmitting}
             className="mt-0.5 h-9 w-full bg-[#8fd3a7] font-medium text-[#102016] hover:bg-[#a4e3b8]"
           >
-            Add Book
+            {isSubmitting ? "Adding Book..." : "Add Book"}
           </Button>
         </form>
       </section>
     </main>
+  );
+}
+
+// [PRIVATE ROUTE]: add-book রুটটিকে PrivateRoute দিয়ে সুরক্ষিত করা হলো
+// শুধুমাত্র লগইন করা ইউজাররা বই যোগ করতে পারবে
+export default function AddBookPage() {
+  return (
+    <PrivateRoute>
+      <AddBookContent />
+    </PrivateRoute>
   );
 }
