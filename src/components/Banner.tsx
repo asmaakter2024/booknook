@@ -109,10 +109,7 @@ export default function Banner() {
                   {slide.description}
                 </p>
 
-                <Button
-                  asChild
-                  className="mt-7 bg-amber-100 text-stone-900 hover:bg-white"
-                >
+                <Button className="mt-7 bg-amber-100 text-stone-900 hover:bg-white">
                   <Link href="/books">
                     Browse Books <span aria-hidden="true">→</span>
                   </Link>
