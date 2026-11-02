@@ -125,11 +125,12 @@ export default function AddBookPage() {
           </div>
 
           <div className="grid gap-1.5">
-            <Label htmlFor="image">Book Image</Label>
+            <Label htmlFor="imageUrl"> ImageUrl</Label>
             <Input
-              id="image"
+              id="imageUrl"
               name="image"
-              type="file"
+              type="url"
+              placeholder="https://example.com/image.jpg"
               accept="image/*"
               required
               className="h-9 cursor-pointer border-white/15 bg-white/[0.045] text-white file:mr-3 file:border-0 file:bg-transparent file:text-sm file:text-white"
