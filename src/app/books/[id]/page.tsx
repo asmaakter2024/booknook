@@ -6,6 +6,8 @@ import "./books-details.css";
 import Image from "next/image";
 import PrivateRoute from "@/components/PrivateRoute";
 import { useAuth } from "@/context/AuthContext";
+// [TOAST]: টোস্ট নোটিফিকেশন দেখানোর জন্য toast ইমপোর্ট করা হলো
+import { toast } from "@/components/ui/toast";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
@@ -111,7 +113,12 @@ function BooksDetailsContent() {
         );
       }
 
-      setMessage("Book borrowed successfully!");
+      // [TOAST]: সফলভাবে borrow হলে success toast দেখানো হবে
+      toast.add({
+        title: "Book borrowed successfully!",
+        description: `You can keep "${(book?.title || "this book").trim()}" for 7 days.`,
+        type: "success",
+      });
 
       setBook((prev) =>
         prev
@@ -122,13 +129,18 @@ function BooksDetailsContent() {
           : prev
       );
 
-      window.setTimeout(() => setDialogOpen(false), 1200);
+      window.setTimeout(() => setDialogOpen(false), 800);
     } catch (err: unknown) {
+      // [NO DOUBLE BORROW]: ডুপ্লিকেট borrow বা অন্য error হলে error toast দেখানো হবে
       const errorMsg =
         err instanceof Error
           ? err.message
           : "Something went wrong. Please try again.";
-      setMessage(errorMsg);
+      toast.add({
+        title: "Borrow Failed",
+        description: errorMsg,
+        type: "error",
+      });
     } finally {
       setSubmitting(false);
     }
