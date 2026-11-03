@@ -31,10 +31,10 @@ function LoginForm() {
   };
 
   // ১-ক্লিক ডেমো লগইন (পরীক্ষা বা টেস্টের জন্য দ্রুত লগইন করার বাটন)
-  const handleDemoLogin = () => {
-    login("reader@booknook.app", "John Reader");
-    router.push(redirectUrl);
-  };
+  // const handleDemoLogin = () => {
+  //   login("reader@booknook.app", "John Reader");
+  //   router.push(redirectUrl);
+  // };
 
   return (
     <div className="mx-auto w-full max-w-md rounded-2xl border border-white/10 bg-[#142119] p-8 shadow-2xl">
@@ -99,13 +99,13 @@ function LoginForm() {
 
       <div className="relative my-6 text-center text-xs text-white/40">
         <div className="absolute inset-0 flex items-center">
-          <div className="w-full border-t border-white/10" />
+          <div className="w-full mb-4 border-t border-white/10" />
         </div>
-        <span className="relative bg-[#142119] px-3">or continue with</span>
+        {/* <span className="relative bg-[#142119] px-3">or continue with</span> */}
       </div>
 
       {/* কুইক ডেমো লগইন বাটন */}
-      <Button
+      {/* <Button
         type="button"
         variant="outline"
         onClick={handleDemoLogin}
@@ -113,10 +113,10 @@ function LoginForm() {
       >
         <Sparkles className="mr-2 size-4 text-amber-300" />
         Quick Demo Login
-      </Button>
+      </Button> */}
 
       {/* [NEW LINK]: রেজিস্টার পেজের লিংক */}
-      <div className="mt-6 text-center text-xs text-white/60">
+      <div className="mt-8 text-center text-xs text-white/60">
         Don&apos;t have an account?{" "}
         <Link
           href={`/register?redirect=${encodeURIComponent(redirectUrl)}`}

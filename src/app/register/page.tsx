@@ -3,26 +3,30 @@
 import { useState, Suspense, type FormEvent } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
-import { useAuth } from "@/context/AuthContext";
+import { authClient } from "@/lib/auth-client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { BookOpen, UserPlus } from "lucide-react";
 
-// [REGISTER FORM COMPONENT]:
 function RegisterForm() {
-  const { register } = useAuth();
   const router = useRouter();
   const searchParams = useSearchParams();
-  const redirectUrl = searchParams.get("redirect") || "/";
+
+  const requestedRedirect = searchParams.get("redirect");
+  const redirectUrl =
+    requestedRedirect?.startsWith("/") && !requestedRedirect.startsWith("//")
+      ? requestedRedirect
+      : "/";
 
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [photoURL, setPhotoURL] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
 
-  const handleSubmit = (e: FormEvent) => {
+  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setError("");
 
@@ -36,16 +40,36 @@ function RegisterForm() {
       return;
     }
 
-    if (password.length < 6) {
-      setError("Password must be at least 6 characters long.");
+    if (password.length < 8) {
+      setError("Password must be at least 8 characters long.");
       return;
     }
 
-    // ইউজারকে রেজিস্টার করানো
-    register(name, email, password, photoURL);
+    setIsLoading(true);
 
-    // রিডাইরেক্ট করা
-    router.push(redirectUrl);
+    try {
+      const result = await authClient.signUp.email({
+        name: name.trim(),
+        email: email.trim(),
+        password,
+        image: photoURL.trim() || undefined,
+      });
+
+      if (result.error) {
+        setError(result.error.message || "Could not create your account.");
+        return;
+      }
+
+      router.push(redirectUrl);
+    } catch (err) {
+      setError(
+        err instanceof Error
+          ? err.message
+          : "Something went wrong. Please try again.",
+      );
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -63,7 +87,10 @@ function RegisterForm() {
       </div>
 
       {error && (
-        <div className="mb-4 rounded-lg border border-red-500/20 bg-red-500/10 p-3 text-center text-xs text-red-400">
+        <div
+          role="alert"
+          className="mb-4 rounded-lg border border-red-500/20 bg-red-500/10 p-3 text-center text-xs text-red-400"
+        >
           {error}
         </div>
       )}
@@ -112,7 +139,8 @@ function RegisterForm() {
             id="register-password"
             type="password"
             required
-            placeholder="At least 6 characters"
+            minLength={8}
+            placeholder="At least 8 characters"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             className="border-white/15 bg-white/[0.045] text-white"
@@ -121,10 +149,11 @@ function RegisterForm() {
 
         <Button
           type="submit"
+          disabled={isLoading}
           className="w-full bg-[#8fd3a7] font-semibold text-[#102016] hover:bg-[#a4e3b8]"
         >
           <UserPlus className="mr-2 size-4" />
-          Register Now
+          {isLoading ? "Creating account..." : "Register Now"}
         </Button>
       </form>
 
@@ -141,11 +170,14 @@ function RegisterForm() {
   );
 }
 
-// [REGISTER PAGE]:
 export default function RegisterPage() {
   return (
     <main className="flex min-h-[80vh] items-center justify-center bg-[#0b1510] px-4 py-12 text-[#edf2ed]">
-      <Suspense fallback={<div className="text-white/60">Loading registration form...</div>}>
+      <Suspense
+        fallback={
+          <div className="text-white/60">Loading registration form...</div>
+        }
+      >
         <RegisterForm />
       </Suspense>
     </main>
