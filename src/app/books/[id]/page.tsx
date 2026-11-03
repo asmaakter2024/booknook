@@ -5,7 +5,7 @@ import { useParams, useRouter } from "next/navigation";
 import "./books-details.css";
 import Image from "next/image";
 import PrivateRoute from "@/components/PrivateRoute";
-import { useAuth } from "@/context/AuthContext";
+import { authClient } from "@/lib/auth-client";
 // [TOAST]: টোস্ট নোটিফিকেশন দেখানোর জন্য toast ইমপোর্ট করা হলো
 import { toast } from "@/components/ui/toast";
 
@@ -26,19 +26,16 @@ interface IBookDetails {
 function BooksDetailsContent() {
   const { id } = useParams();
   const router = useRouter();
-  const { user } = useAuth();
+  const { data: session } = authClient.useSession();
+  const user = session?.user;
 
   const [book, setBook] = useState<IBookDetails | null>(null);
   const [loading, setLoading] = useState(true);
   const [pageError, setPageError] = useState("");
 
   const [dialogOpen, setDialogOpen] = useState(false);
-  const [userName, setUserName] = useState("");
-  const [userEmail, setUserEmail] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [message, setMessage] = useState("");
-
-  // [FIX]: ডায়ালগ ওপেন করার সময় ইউজারের নাম ও ইমেইল সেট করা হবে (useEffect এর পরিবর্তে)
 
   useEffect(() => {
     if (!id) return;
@@ -86,13 +83,17 @@ function BooksDetailsContent() {
 
   async function handleBorrow(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    setSubmitting(true);
     setMessage("");
 
-    try {
-      const currentUserName = (user?.name || userName || "").trim();
-      const currentUserEmail = (user?.email || userEmail || "").trim();
+    const currentUserName = user?.name?.trim() || "";
+    const currentUserEmail = user?.email?.trim();
+    if (!currentUserEmail) {
+      setMessage("Your session could not be verified. Please sign in again.");
+      return;
+    }
 
+    setSubmitting(true);
+    try {
       const res = await fetch(`${API_URL}/borrows`, {
         method: "POST",
         headers: {
@@ -202,12 +203,9 @@ function BooksDetailsContent() {
           <div className="book-meta">
             <div>
               <span className="meta-label">Added by</span>
-              {/* [FIX]: লগইন করা ইউজারের নাম ও ইমেইল দিয়ে Added by অংশ দেখানো হচ্ছে */}
-              <strong>
-                {(user?.name || book.userName || "Library").trim()}
-              </strong>
+              <strong>{user?.name || ""}</strong>
               <span className="meta-sub">
-                {(user?.email || book.userEmail || "").trim()}
+                {user?.email || ""}
               </span>
             </div>
 
@@ -223,10 +221,6 @@ function BooksDetailsContent() {
               disabled={available < 1}
               onClick={() => {
                 setMessage("");
-                if (user) {
-                  setUserName(user.name);
-                  setUserEmail(user.email);
-                }
                 setDialogOpen(true);
               }}
             >
@@ -268,22 +262,20 @@ function BooksDetailsContent() {
             <p className="dialog-note">You can keep this book for 7 days.</p>
 
             <form onSubmit={handleBorrow}>
-              {/* [FIX]: পপ-আপে লগইন করা ইউজারের নাম readOnly হিসেবে বসানো হলো (এডিট করা যাবে না) */}
               <label htmlFor="borrow-name">User Name</label>
               <input
                 id="borrow-name"
                 readOnly
-                value={user?.name || userName}
+                value={user?.name || ""}
                 className="cursor-not-allowed opacity-80"
               />
 
-              {/* [FIX]: পপ-আপে লগইন করা ইউজারের ইমেইল readOnly হিসেবে বসানো হলো (এডিট করা যাবে না) */}
               <label htmlFor="borrow-email">User Email</label>
               <input
                 id="borrow-email"
                 type="email"
                 readOnly
-                value={user?.email || userEmail}
+                value={user?.email || ""}
                 className="cursor-not-allowed opacity-80"
               />
 

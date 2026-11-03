@@ -5,7 +5,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { BookOpen, CheckCircle, Loader2 } from "lucide-react";
 import PrivateRoute from "@/components/PrivateRoute";
-import { useAuth } from "@/context/AuthContext";
+import { authClient } from "@/lib/auth-client";
 import { Button } from "@/components/ui/button";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
@@ -39,7 +39,8 @@ function formatDate(dateInput?: string | Date) {
 }
 
 function MyBorrowsContent() {
-  const { user } = useAuth();
+  const { data: session } = authClient.useSession();
+  const userEmail = session?.user.email;
   const [borrows, setBorrows] = useState<IBorrow[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -49,7 +50,6 @@ function MyBorrowsContent() {
   // [FIX]: ইউজারের ধার করা বইগুলো ফেচ করা (React 19 / useEffect নিয়ম অনুযায়ী)
   useEffect(() => {
     let ignore = false;
-    const userEmail = user?.email;
     if (!userEmail) return;
 
     async function loadBorrows(email: string) {
@@ -76,7 +76,7 @@ function MyBorrowsContent() {
     return () => {
       ignore = true;
     };
-  }, [user?.email]);
+  }, [userEmail]);
 
   // বই ফেরত দেওয়া (Return Book)
   const handleReturn = async (borrowId: string, title: string) => {

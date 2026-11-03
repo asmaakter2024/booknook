@@ -2,30 +2,27 @@
 
 import { useEffect } from "react";
 import { useRouter, usePathname } from "next/navigation";
-import { useAuth } from "@/context/AuthContext";
 import { Loader2 } from "lucide-react";
+import { authClient } from "@/lib/auth-client";
+import { Button } from "@/components/ui/button";
 
-// [PRIVATE ROUTE WRAPPER]:
-// শুধুমাত্র লগইন করা ইউজাররা এই রুটে ঢুকতে পারবে।
-// লগইন না থাকলে এটি অটোমেটিক /login পেজে রিডাইরেক্ট করে নিয়ে যাবে।
 export default function PrivateRoute({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  const { user, loading } = useAuth();
+  const { data: session, isPending, error, refetch } = authClient.useSession();
   const router = useRouter();
   const pathname = usePathname();
+  const user = session?.user;
 
   useEffect(() => {
-    if (!loading && !user) {
-      // লগইন না থাকলে /login পেজে পাঠানো হচ্ছে, সাথে ফেরত আসার জন্য redirect প্যারামিটার
-      router.push(`/login?redirect=${encodeURIComponent(pathname)}`);
+    if (!isPending && !error && !user) {
+      router.replace(`/login?redirect=${encodeURIComponent(pathname)}`);
     }
-  }, [user, loading, router, pathname]);
+  }, [user, isPending, error, router, pathname]);
 
-  // লগইন চেক হওয়া পর্যন্ত লোডিং স্পিনার দেখানো
-  if (loading) {
+  if (isPending) {
     return (
       <div className="flex min-h-[60vh] flex-col items-center justify-center bg-[#0b1510] text-[#edf2ed]">
         <Loader2 className="size-8 animate-spin text-[#8fd3a7]" />
@@ -34,11 +31,26 @@ export default function PrivateRoute({
     );
   }
 
-  // ইউজার না থাকলে কিছু দেখাবে না (রিডাইরেক্ট হওয়া পর্যন্ত)
+  if (error) {
+    return (
+      <div className="flex min-h-[60vh] flex-col items-center justify-center gap-4 bg-[#0b1510] px-4 text-center text-[#edf2ed]">
+        <p role="alert" className="text-sm text-red-300">
+          Could not verify your session: {error.message}
+        </p>
+        <Button
+          type="button"
+          onClick={() => void refetch()}
+          className="bg-[#8fd3a7] font-semibold text-[#102016] hover:bg-[#a4e3b8]"
+        >
+          Try again
+        </Button>
+      </div>
+    );
+  }
+
   if (!user) {
     return null;
   }
 
-  // ইউজার লগইন থাকলে পেজটি রেন্ডার হবে
   return <>{children}</>;
 }

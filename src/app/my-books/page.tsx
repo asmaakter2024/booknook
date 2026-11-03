@@ -5,7 +5,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { BookOpen, Edit2, Loader2, Trash2, X } from "lucide-react";
 import PrivateRoute from "@/components/PrivateRoute";
-import { useAuth } from "@/context/AuthContext";
+import { authClient } from "@/lib/auth-client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -25,7 +25,8 @@ interface IBook {
 }
 
 function MyBooksContent() {
-  const { user } = useAuth();
+  const { data: session } = authClient.useSession();
+  const userEmail = session?.user.email;
   const [books, setBooks] = useState<IBook[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -37,7 +38,6 @@ function MyBooksContent() {
   // [FIX]: ইউজারের বইগুলো নিরাপদে ফেচ করা (React 19 / useEffect নিয়ম অনুযায়ী)
   useEffect(() => {
     let ignore = false;
-    const userEmail = user?.email;
     if (!userEmail) return;
 
     async function loadBooks(email: string) {
@@ -64,7 +64,7 @@ function MyBooksContent() {
     return () => {
       ignore = true;
     };
-  }, [user?.email]);
+  }, [userEmail]);
 
   // বই ডিলিট করা
   const handleDelete = async (bookId: string, title: string) => {

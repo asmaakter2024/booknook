@@ -1,8 +1,8 @@
 "use client";
 
 import { useState, type FormEvent } from "react";
-import { useAuth } from "@/context/AuthContext";
 import PrivateRoute from "@/components/PrivateRoute";
+import { authClient } from "@/lib/auth-client";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -20,14 +20,11 @@ const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 const categories = ["Fiction", "Science", "History", "Kids", "Others"];
 
 function AddBookContent() {
-  const { user } = useAuth();
+  const { data: session } = authClient.useSession();
+  const user = session?.user;
   const [successMessage, setSuccessMessage] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
-
-  // লগইন করা ইউজারের নাম ও ইমেইল ইনিশিয়াল স্টেট হিসেবে বসানো
-  const [userName, setUserName] = useState(user?.name || "");
-  const [userEmail, setUserEmail] = useState(user?.email || "");
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -38,8 +35,14 @@ function AddBookContent() {
     const form = event.currentTarget;
     const formData = new FormData(form);
 
-    const currentUserName = (user?.name || userName || "").trim();
-    const currentUserEmail = (user?.email || userEmail || "").trim();
+    const currentUserName = (user?.name || "").trim();
+    const currentUserEmail = (user?.email || "").trim();
+
+    if (!currentUserEmail) {
+      setErrorMessage("Your session could not be verified. Please sign in again.");
+      setIsSubmitting(false);
+      return;
+    }
 
     const bookData = {
       title: formData.get("title"),
@@ -67,10 +70,6 @@ function AddBookContent() {
 
       setSuccessMessage("Book added successfully to the library!");
       form.reset();
-      if (user) {
-        setUserName(user.name);
-        setUserEmail(user.email);
-      }
     } catch (err: unknown) {
       console.error("Error adding book:", err);
       const msg =
@@ -183,7 +182,7 @@ function AddBookContent() {
                 id="userName"
                 name="userName"
                 readOnly
-                value={user?.name || userName}
+                value={user?.name || ""}
                 className="h-9 cursor-not-allowed border-white/10 bg-white/[0.035] text-white/65"
               />
             </div>
@@ -196,7 +195,7 @@ function AddBookContent() {
                 name="userEmail"
                 type="email"
                 readOnly
-                value={user?.email || userEmail}
+                value={user?.email || ""}
                 className="h-9 cursor-not-allowed border-white/10 bg-white/[0.035] text-white/65"
               />
             </div>
