@@ -4,7 +4,6 @@ import { useEffect, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { BookOpen, CheckCircle, Loader2 } from "lucide-react";
-import PrivateRoute from "@/components/PrivateRoute";
 import { authClient } from "@/lib/auth-client";
 import { Button } from "@/components/ui/button";
 
@@ -54,7 +53,9 @@ function MyBorrowsContent() {
 
     async function loadBorrows(email: string) {
       try {
-        const res = await fetch(`${API_URL}/borrows?email=${encodeURIComponent(email)}`);
+        const res = await fetch(
+          `${API_URL}/borrows?email=${encodeURIComponent(email)}`,
+        );
         if (!res.ok) throw new Error("Failed to fetch borrowed books.");
         const data = await res.json();
         if (!ignore) {
@@ -62,7 +63,9 @@ function MyBorrowsContent() {
         }
       } catch (err: unknown) {
         if (!ignore) {
-          setError(err instanceof Error ? err.message : "Error loading borrowed books");
+          setError(
+            err instanceof Error ? err.message : "Error loading borrowed books",
+          );
         }
       } finally {
         if (!ignore) {
@@ -80,7 +83,9 @@ function MyBorrowsContent() {
 
   // বই ফেরত দেওয়া (Return Book)
   const handleReturn = async (borrowId: string, title: string) => {
-    const confirmReturn = window.confirm(`Are you sure you want to return "${title}"?`);
+    const confirmReturn = window.confirm(
+      `Are you sure you want to return "${title}"?`,
+    );
     if (!confirmReturn) return;
 
     try {
@@ -216,7 +221,9 @@ function MyBorrowsContent() {
                             variant="outline"
                             size="sm"
                             disabled={isReturning}
-                            onClick={() => handleReturn(item._id, item.bookTitle)}
+                            onClick={() =>
+                              handleReturn(item._id, item.bookTitle)
+                            }
                             className="h-8 border-white/15 bg-white/5 text-xs text-white hover:bg-white/15 disabled:opacity-50"
                           >
                             {isReturning ? (
@@ -244,9 +251,5 @@ function MyBorrowsContent() {
 
 // [PRIVATE ROUTE]: My Borrows পেজ শুধুমাত্র লগইন করা ইউজারদের জন্য
 export default function MyBorrowsPage() {
-  return (
-    <PrivateRoute>
-      <MyBorrowsContent />
-    </PrivateRoute>
-  );
+  return <MyBorrowsContent />;
 }

@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, type FormEvent } from "react";
-import PrivateRoute from "@/components/PrivateRoute";
 import { authClient } from "@/lib/auth-client";
 
 import { Button } from "@/components/ui/button";
@@ -39,7 +38,9 @@ function AddBookContent() {
     const currentUserEmail = (user?.email || "").trim();
 
     if (!currentUserEmail) {
-      setErrorMessage("Your session could not be verified. Please sign in again.");
+      setErrorMessage(
+        "Your session could not be verified. Please sign in again.",
+      );
       setIsSubmitting(false);
       return;
     }
@@ -229,9 +230,5 @@ function AddBookContent() {
 // [PRIVATE ROUTE]: add-book রুটটিকে PrivateRoute দিয়ে সুরক্ষিত করা হলো
 // শুধুমাত্র লগইন করা ইউজাররা বই যোগ করতে পারবে
 export default function AddBookPage() {
-  return (
-    <PrivateRoute>
-      <AddBookContent />
-    </PrivateRoute>
-  );
+  return <AddBookContent />;
 }

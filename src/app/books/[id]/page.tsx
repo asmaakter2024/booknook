@@ -4,7 +4,6 @@ import { useEffect, useState, type FormEvent } from "react";
 import { useParams, useRouter } from "next/navigation";
 import "./books-details.css";
 import Image from "next/image";
-import PrivateRoute from "@/components/PrivateRoute";
 import { authClient } from "@/lib/auth-client";
 // [TOAST]: টোস্ট নোটিফিকেশন দেখানোর জন্য toast ইমপোর্ট করা হলো
 import { toast } from "@/components/ui/toast";
@@ -64,7 +63,9 @@ function BooksDetailsContent() {
       } catch (err: unknown) {
         if (err instanceof Error) {
           if (err.name !== "AbortError") {
-            setPageError(err.message || "Could not connect to the books server.");
+            setPageError(
+              err.message || "Could not connect to the books server.",
+            );
           }
         } else {
           setPageError("Could not connect to the books server.");
@@ -127,7 +128,7 @@ function BooksDetailsContent() {
               ...prev,
               totalCopies: Math.max(0, Number(prev.totalCopies || 1) - 1),
             }
-          : prev
+          : prev,
       );
 
       window.setTimeout(() => setDialogOpen(false), 800);
@@ -204,9 +205,7 @@ function BooksDetailsContent() {
             <div>
               <span className="meta-label">Added by</span>
               <strong>{user?.name || ""}</strong>
-              <span className="meta-sub">
-                {user?.email || ""}
-              </span>
+              <span className="meta-sub">{user?.email || ""}</span>
             </div>
 
             <div>
@@ -310,9 +309,5 @@ function BooksDetailsContent() {
 // [PRIVATE ROUTE]: বইয়ের ডিটেইলস পেজটি PrivateRoute দিয়ে সুরক্ষিত করা হলো
 // ইউজার লগইন না থাকলে স্বয়ংক্রিয়ভাবে লগইন পেজে চলে যাবে
 export default function BooksDetailsPage() {
-  return (
-    <PrivateRoute>
-      <BooksDetailsContent />
-    </PrivateRoute>
-  );
+  return <BooksDetailsContent />;
 }

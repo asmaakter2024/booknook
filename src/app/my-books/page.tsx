@@ -4,7 +4,6 @@ import { useEffect, useState, type FormEvent } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { BookOpen, Edit2, Loader2, Trash2, X } from "lucide-react";
-import PrivateRoute from "@/components/PrivateRoute";
 import { authClient } from "@/lib/auth-client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -42,7 +41,9 @@ function MyBooksContent() {
 
     async function loadBooks(email: string) {
       try {
-        const res = await fetch(`${API_URL}/my-books?email=${encodeURIComponent(email)}`);
+        const res = await fetch(
+          `${API_URL}/my-books?email=${encodeURIComponent(email)}`,
+        );
         if (!res.ok) throw new Error("Failed to fetch your books.");
         const data = await res.json();
         if (!ignore) {
@@ -68,7 +69,9 @@ function MyBooksContent() {
 
   // বই ডিলিট করা
   const handleDelete = async (bookId: string, title: string) => {
-    const confirmDelete = window.confirm(`Are you sure you want to delete "${title}"?`);
+    const confirmDelete = window.confirm(
+      `Are you sure you want to delete "${title}"?`,
+    );
     if (!confirmDelete) return;
 
     try {
@@ -106,7 +109,7 @@ function MyBooksContent() {
       }
 
       setBooks((prev) =>
-        prev.map((b) => (b._id === editingBook._id ? editingBook : b))
+        prev.map((b) => (b._id === editingBook._id ? editingBook : b)),
       );
       setEditingBook(null);
     } catch (err: unknown) {
@@ -164,7 +167,9 @@ function MyBooksContent() {
                     <th className="px-6 py-4 font-medium">Book</th>
                     <th className="px-6 py-4 font-medium">Category</th>
                     <th className="px-6 py-4 font-medium">Copies</th>
-                    <th className="px-6 py-4 text-right font-medium">Actions</th>
+                    <th className="px-6 py-4 text-right font-medium">
+                      Actions
+                    </th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-white/5">
@@ -195,8 +200,12 @@ function MyBooksContent() {
                               )}
                             </div>
                             <div>
-                              <p className="font-medium text-white">{book.title}</p>
-                              <p className="text-xs text-white/50">{book.author}</p>
+                              <p className="font-medium text-white">
+                                {book.title}
+                              </p>
+                              <p className="text-xs text-white/50">
+                                {book.author}
+                              </p>
                             </div>
                           </div>
                         </td>
@@ -261,26 +270,36 @@ function MyBooksContent() {
             </button>
 
             <h2 className="font-serif text-xl font-bold">Edit Book</h2>
-            <p className="text-xs text-white/50">Update details for {editingBook.title}</p>
+            <p className="text-xs text-white/50">
+              Update details for {editingBook.title}
+            </p>
 
             <form onSubmit={handleUpdate} className="mt-4 space-y-3.5">
               <div>
-                <Label htmlFor="edit-title" className="text-xs">Title</Label>
+                <Label htmlFor="edit-title" className="text-xs">
+                  Title
+                </Label>
                 <Input
                   id="edit-title"
                   value={editingBook.title}
-                  onChange={(e) => setEditingBook({ ...editingBook, title: e.target.value })}
+                  onChange={(e) =>
+                    setEditingBook({ ...editingBook, title: e.target.value })
+                  }
                   required
                   className="mt-1 h-9 border-white/15 bg-white/5 text-white"
                 />
               </div>
 
               <div>
-                <Label htmlFor="edit-author" className="text-xs">Author</Label>
+                <Label htmlFor="edit-author" className="text-xs">
+                  Author
+                </Label>
                 <Input
                   id="edit-author"
                   value={editingBook.author}
-                  onChange={(e) => setEditingBook({ ...editingBook, author: e.target.value })}
+                  onChange={(e) =>
+                    setEditingBook({ ...editingBook, author: e.target.value })
+                  }
                   required
                   className="mt-1 h-9 border-white/15 bg-white/5 text-white"
                 />
@@ -288,24 +307,38 @@ function MyBooksContent() {
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <Label htmlFor="edit-category" className="text-xs">Category</Label>
+                  <Label htmlFor="edit-category" className="text-xs">
+                    Category
+                  </Label>
                   <Input
                     id="edit-category"
                     value={editingBook.category}
-                    onChange={(e) => setEditingBook({ ...editingBook, category: e.target.value })}
+                    onChange={(e) =>
+                      setEditingBook({
+                        ...editingBook,
+                        category: e.target.value,
+                      })
+                    }
                     required
                     className="mt-1 h-9 border-white/15 bg-white/5 text-white"
                   />
                 </div>
 
                 <div>
-                  <Label htmlFor="edit-copies" className="text-xs">Total Copies</Label>
+                  <Label htmlFor="edit-copies" className="text-xs">
+                    Total Copies
+                  </Label>
                   <Input
                     id="edit-copies"
                     type="number"
                     min={0}
                     value={editingBook.totalCopies}
-                    onChange={(e) => setEditingBook({ ...editingBook, totalCopies: Number(e.target.value) })}
+                    onChange={(e) =>
+                      setEditingBook({
+                        ...editingBook,
+                        totalCopies: Number(e.target.value),
+                      })
+                    }
                     required
                     className="mt-1 h-9 border-white/15 bg-white/5 text-white"
                   />
@@ -313,12 +346,16 @@ function MyBooksContent() {
               </div>
 
               <div>
-                <Label htmlFor="edit-image" className="text-xs">Cover Image URL</Label>
+                <Label htmlFor="edit-image" className="text-xs">
+                  Cover Image URL
+                </Label>
                 <Input
                   id="edit-image"
                   type="url"
                   value={editingBook.image || ""}
-                  onChange={(e) => setEditingBook({ ...editingBook, image: e.target.value })}
+                  onChange={(e) =>
+                    setEditingBook({ ...editingBook, image: e.target.value })
+                  }
                   placeholder="https://..."
                   className="mt-1 h-9 border-white/15 bg-white/5 text-white"
                 />
@@ -353,9 +390,5 @@ function MyBooksContent() {
 
 // [PRIVATE ROUTE]: My Books পেজ শুধুমাত্র লগইন করা ইউজারদের জন্য
 export default function MyBooksPage() {
-  return (
-    <PrivateRoute>
-      <MyBooksContent />
-    </PrivateRoute>
-  );
+  return <MyBooksContent />;
 }
