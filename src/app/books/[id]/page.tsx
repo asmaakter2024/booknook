@@ -7,6 +7,7 @@ import Image from "next/image";
 import { authClient } from "@/lib/auth-client";
 // [TOAST]: টোস্ট নোটিফিকেশন দেখানোর জন্য toast ইমপোর্ট করা হলো
 import { toast } from "@/components/ui/toast";
+import { getTokenFromClient } from "@/lib/getTokenFromClient";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
@@ -45,9 +46,13 @@ function BooksDetailsContent() {
       try {
         setLoading(true);
         setPageError("");
-
+        const token = await getTokenFromClient();
+        console.log(token);
         const res = await fetch(`${API_URL}/books/${id}`, {
           signal: controller.signal,
+          headers: {
+            authorization: `Bearer ${token}`,
+          },
         });
 
         if (!res.ok) {
@@ -92,13 +97,21 @@ function BooksDetailsContent() {
       setMessage("Your session could not be verified. Please sign in again.");
       return;
     }
+    // const token = session?.token;
+    // console.log(token);
+    // if (!token) {
+    //   setMessage("Your session could not be verified. Please sign in again.");
+    //   return;
+    // }
 
     setSubmitting(true);
     try {
+      // const token = getTokenFromClient();
       const res = await fetch(`${API_URL}/borrows`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
+          //authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({
           bookId: book?._id || id,

@@ -22,7 +22,11 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" className={`${josefinSans.className} h-full antialiased`}>
+    <html
+      lang="en"
+      suppressHydrationWarning
+      className={`${josefinSans.className} h-full antialiased`}
+    >
       <body className="min-h-full flex flex-col">
         {/* [TOAST]: অ্যাপের যেকোনো জায়গা থেকে toast.add() দিয়ে টোস্ট দেখানো যাবে */}
         <Toaster>
