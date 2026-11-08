@@ -106,12 +106,12 @@ function BooksDetailsContent() {
 
     setSubmitting(true);
     try {
-      // const token = getTokenFromClient();
+      const token = await getTokenFromClient();
       const res = await fetch(`${API_URL}/borrows`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          //authorization: `Bearer ${token}`,
+          authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({
           bookId: book?._id || id,
